@@ -1,0 +1,79 @@
+Upgrading the Kubernetes Cluster consists of upgrading both the Control plane(Master Node) and the worker Nodes to ensure compatibility.
+
+Firstly we backup the Cluster 
+
+To do so we take a backup of the etcd database
+ 
+ETCDCTL_API=3 etcdctl snapshot save /path/to/backup.db \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key
+
+verify the current version
+
+kubectl version --short
+
+Check the Kubernetes Release notes
+
+Kubeadm upgrade plan
+
+
+To upgrade the control plane we need to update the kubeadm, kubelet and kubectl binaries:
+
+sudo apt update
+sudo apt install -y kubeadm=1.xx.x-00
+
+
+
+sudo kubeadm upgrade apply v1.xx.x
+
+verify the upgrade
+
+kubectl get nodes
+kubectl get pods -n kube-system
+
+update kubelet and kubectl
+
+sudo apt install -y kubelet=1.xx.x-00 kubectl=1.xx.x-00
+sudo systemctl restart kubelet
+
+check status of kubectl
+
+
+systemctl status kubelet
+
+
+upgrade worker nodes
+
+sudo apt update
+sudo apt install -y kubeadm=1.xx.x-00
+
+use kubeadm to update node configuration
+
+sudo kubeadm upgrade node
+
+update kubelet and kubectl
+
+sudo apt install -y kubelet=1.xx.x-00 kubectl=1.xx.x-00
+sudo systemctl restart kubelet
+
+verify the kubelet is running
+systemctl status kubelet
+
+Drain and rejoin the worker nodes
+
+kubectl cordon <node-name>
+kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+
+
+Rejoin the node
+
+kubectl uncordon <node-name>
+
+verify the cluster
+ kubectl get nodes.
+kubectl get pods --all-namespaces
+kubectl version --short
+
+
